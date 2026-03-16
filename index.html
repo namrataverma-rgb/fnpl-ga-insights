@@ -275,11 +275,10 @@
       <tr><td class="bold">4</td><td class="right">6,201</td><td class="right">46.5%</td><td class="right">12.0%</td><td class="right">622</td><td class="right">24%</td><td class="right">25%</td><td class="right">26%</td><td class="right">45.3%</td><td class="right">$66,369</td><td class="right">$1,462</td></tr>
       <tr><td class="bold">5</td><td class="right">4,264</td><td class="right">38.4%</td><td class="right">17.1%</td><td class="right">588</td><td class="right">28%</td><td class="right">30%</td><td class="right">32%</td><td class="right">45.7%</td><td class="right">$66,348</td><td class="right">$1,485</td></tr>
       <tr><td class="bold">6</td><td class="right">3,647</td><td class="right">25.9%</td><td class="right">22.7%</td><td class="right">577</td><td class="right">33%</td><td class="right">33%</td><td class="right">33%</td><td class="right">43.2%</td><td class="right">$64,568</td><td class="right">$1,476</td></tr>
-      <tr style="background:#fce4ec;"><td class="bold">7</td><td class="right">11,660</td><td class="right">0.0%</td><td class="right">40.6%</td><td class="right">549</td><td class="right" colspan="6">Auto-declined (UWE1/UWE2)</td></tr>
     </table>
   </div>
   <div class="insight-box">
-    <strong>Pricing Adequacy:</strong> RS1&ndash;2 have massive margin cushion (APR 15&ndash;18% vs PD 0.4&ndash;2.6%). RS3&ndash;4 are healthy. RS5&ndash;6 are tighter but APR still exceeds PD. RS7 is correctly excluded at 40.6% PD.
+    <strong>Pricing Adequacy:</strong> RS1&ndash;2 have massive margin cushion (APR 15&ndash;18% vs PD 0.4&ndash;2.6%). RS3&ndash;4 are healthy. RS5&ndash;6 are tighter but APR still exceeds PD.
   </div>
 </section>
 
@@ -458,17 +457,17 @@ new Chart(document.getElementById('declineChart'), {
 new Chart(document.getElementById('riskChart'), {
   type: 'bar',
   data: {
-    labels: ['RS1','RS2','RS3','RS4','RS5','RS6','RS7'],
+    labels: ['RS1','RS2','RS3','RS4','RS5','RS6'],
     datasets: [
-      { label: 'Approval Rate %', data: [86.6,80.5,61.3,46.5,38.4,25.9,0], backgroundColor: colors.blue, yAxisID: 'y' },
-      { label: 'Avg PD %', data: [0.43,2.58,6.9,11.98,17.13,22.66,40.57], type: 'line', borderColor: colors.red, pointBackgroundColor: colors.red, borderWidth: 3, yAxisID: 'y1', fill: false },
-      { label: 'APR 9m %', data: [15,18,23,26,32,33,0], type: 'line', borderColor: colors.green, pointBackgroundColor: colors.green, borderWidth: 2, borderDash: [5,5], yAxisID: 'y1', fill: false }
+      { label: 'Approval Rate %', data: [86.6,80.5,61.3,46.5,38.4,25.9], backgroundColor: colors.blue, yAxisID: 'y' },
+      { label: 'Avg PD %', data: [0.43,2.58,6.9,11.98,17.13,22.66], type: 'line', borderColor: colors.red, pointBackgroundColor: colors.red, borderWidth: 3, yAxisID: 'y1', fill: false },
+      { label: 'APR 9m %', data: [15,18,23,26,32,33], type: 'line', borderColor: colors.green, pointBackgroundColor: colors.green, borderWidth: 2, borderDash: [5,5], yAxisID: 'y1', fill: false }
     ]
   },
   options: { responsive: true, maintainAspectRatio: false,
     scales: {
       y: { beginAtZero: true, max: 100, position: 'left', title: { display: true, text: 'Approval Rate %' } },
-      y1: { beginAtZero: true, max: 50, position: 'right', title: { display: true, text: 'PD % / APR %' }, grid: { drawOnChartArea: false } }
+      y1: { beginAtZero: true, max: 40, position: 'right', title: { display: true, text: 'PD % / APR %' }, grid: { drawOnChartArea: false } }
     }
   }
 });
