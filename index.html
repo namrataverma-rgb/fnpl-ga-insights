@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FNPL GA1.0 Credit Policy Insights</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
   :root {
     --primary: #1a237e;
@@ -146,7 +147,6 @@
   <a href="#takerate">Take Rate</a>
   <a href="#channels">Channels</a>
   <a href="#trends">Trends</a>
-  <a href="#frozen">Frozen Credit</a>
   <a href="#recommendations">Recommendations</a>
 </nav>
 
@@ -314,8 +314,18 @@
       <tr><td class="bold">6</td><td style="background:#e65100;color:white">55%</td><td style="background:#ef6c00;color:white">53%</td><td style="background:#ff9800">45%</td><td style="background:#ff9800">40%</td><td style="background:#ffb74d">40%</td><td style="background:#ffe0b2">16%</td><td style="background:#eee;color:#999">N/A</td><td style="background:#eee;color:#999">N/A</td></tr>
     </table>
   </div>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Funded Volume Mix by Balance Due &amp; RS (100% Stacked)</h3>
+      <div class="chart-container tall"><canvas id="fundedMixChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Term Selection by Balance Due Amount</h3>
+      <div class="chart-container tall"><canvas id="termByBalChart"></canvas></div>
+    </div>
+  </div>
   <div class="insight-box">
-    <strong>Key Findings:</strong> (1) RS1 has a <strong>take rate problem, not a credit problem</strong> &mdash; 90% approved, only 10&ndash;15% accept. (2) Sweet spot is <strong>$500&ndash;$1,500</strong> balance due. (3) Higher risk segments have 3&ndash;4x higher take rates due to greater urgency. (4) Max loan caps create dead zones at $5K+ for RS3&ndash;5 and $4K+ for RS6.
+    <strong>Key Findings:</strong> (1) RS1 has a <strong>take rate problem, not a credit problem</strong> &mdash; 90% approved, only 10&ndash;15% accept. (2) Sweet spot is <strong>$500&ndash;$1,500</strong> balance due. (3) Higher risk segments have 3&ndash;4x higher take rates due to greater urgency. (4) Max loan caps create dead zones at $5K+ for RS3&ndash;5 and $4K+ for RS6. (5) RS1 share of funded volume <strong>grows from 19% (&lt;$500) to 62% ($5K+)</strong> as higher-RS borrowers hit max loan caps. (6) <strong>Term preference shifts with balance</strong>: &lt;$500 &rarr; 54% choose 3-month; $2K&ndash;$5K &rarr; 57% choose 9-month.
   </div>
 </section>
 
@@ -354,24 +364,6 @@
   </div>
   <div class="insight-box">
     <strong>Key Finding:</strong> Approval rate tripled (22.6% &rarr; 67.3%) as applicant quality improved with tax season ramp. However, <strong>fund rate is declining</strong> (17.8% &rarr; 9.7%) &mdash; more approvals are sitting unconverted, suggesting a growing engagement gap.
-  </div>
-</section>
-
-<!-- ============ FROZEN CREDIT ============ -->
-<section id="frozen">
-  <h2>Frozen Credit Analysis</h2>
-  <div class="grid-2">
-    <div class="card">
-      <h3>Frozen Credit Rate by App Date</h3>
-      <div class="chart-container"><canvas id="frozenChart"></canvas></div>
-    </div>
-    <div class="card">
-      <h3>Frozen Credit by Vantage Group (Feb vs Mar)</h3>
-      <div class="chart-container"><canvas id="frozenVantageChart"></canvas></div>
-    </div>
-  </div>
-  <div class="insight-box">
-    <strong>Key Finding:</strong> Frozen credit is <strong>not increasing</strong> &mdash; it spiked to 4.2% on Mar 1 then dropped to 0.2% after a structural break on Mar 4. The phenomenon is almost entirely concentrated in the "No Score" group (~31%). For scored applicants, frozen credit is under 1% across all Vantage bands.
   </div>
 </section>
 
@@ -421,6 +413,9 @@
 <div class="footer">FNPL GA1.0 Credit Policy Insights &bull; Generated Mar 15, 2026 &bull; Data: sandbox_risk_7216.fnpl_alpha_ga1_sim</div>
 
 <script>
+Chart.register(ChartDataLabels);
+Chart.defaults.plugins.datalabels = { display: false };
+
 const colors = {
   blue: '#1565c0', green: '#2e7d32', red: '#c62828', orange: '#e65100',
   purple: '#6a1b9a', teal: '#00838f', gray: '#9e9e9e',
@@ -505,6 +500,99 @@ new Chart(document.getElementById('takeRsChart'), {
   options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 60 } } }
 });
 
+// FUNDED VOLUME MIX (100% STACKED)
+(() => {
+  const rs1 = [336,579,393,297,410,306,184,125];
+  const rs2 = [500,660,407,287,331,202,111,77];
+  const rs3 = [407,573,358,217,238,114,59,0];
+  const rs4 = [277,352,209,132,139,51,25,0];
+  const rs5 = [177,214,116,65,70,37,15,0];
+  const rs6 = [110,132,57,42,38,6,0,0];
+  const totals = rs1.map((_,i) => rs1[i]+rs2[i]+rs3[i]+rs4[i]+rs5[i]+rs6[i]);
+  const pct = (arr) => arr.map((v,i) => totals[i] ? +(v/totals[i]*100).toFixed(1) : 0);
+  new Chart(document.getElementById('fundedMixChart'), {
+    type: 'bar',
+    data: {
+      labels: ['<$500','$500-999','$1K-1.5K','$1.5K-2K','$2K-3K','$3K-4K','$4K-5K','$5K-6K'],
+      datasets: [
+        { label: 'RS1', data: pct(rs1), backgroundColor: '#1565c0' },
+        { label: 'RS2', data: pct(rs2), backgroundColor: '#2e7d32' },
+        { label: 'RS3', data: pct(rs3), backgroundColor: '#f9a825' },
+        { label: 'RS4', data: pct(rs4), backgroundColor: '#e65100' },
+        { label: 'RS5', data: pct(rs5), backgroundColor: '#c62828' },
+        { label: 'RS6', data: pct(rs6), backgroundColor: '#6a1b9a' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        datalabels: {
+          display: (ctx) => ctx.dataset.data[ctx.dataIndex] >= 7,
+          color: '#fff',
+          font: { weight: 'bold', size: 11 },
+          formatter: (v) => v.toFixed(0) + '%',
+          anchor: 'center',
+          align: 'center'
+        },
+        tooltip: {
+          callbacks: {
+            afterTitle: (items) => `Total funded: ${totals[items[0].dataIndex].toLocaleString()}`,
+            label: (ctx) => {
+              const i = ctx.dataIndex;
+              const raw = [rs1,rs2,rs3,rs4,rs5,rs6][ctx.datasetIndex][i];
+              return ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}% (${raw.toLocaleString()} loans)`;
+            }
+          }
+        },
+        legend: { position: 'top', labels: { usePointStyle: true, padding: 16 } }
+      },
+      scales: {
+        x: { stacked: true },
+        y: { stacked: true, beginAtZero: true, max: 100, title: { display: true, text: '% of Funded Loans' },
+          ticks: { callback: v => v + '%' }
+        }
+      }
+    }
+  });
+})();
+
+// TERM SELECTION BY BALANCE DUE (100% stacked)
+new Chart(document.getElementById('termByBalChart'), {
+  type: 'bar',
+  data: {
+    labels: ['<$500','$500-999','$1K-1.5K','$1.5K-2K','$2K-3K','$3K-4K','$4K-5K','$5K-6K'],
+    datasets: [
+      { label: '3-Month', data: [53.7,38.4,27.9,22.8,21.4,22.3,22.3,32.2], backgroundColor: '#1565c0' },
+      { label: '6-Month', data: [21.3,25.8,24.8,25.3,21.3,21.6,21.6,18.3], backgroundColor: '#e65100' },
+      { label: '9-Month', data: [25.0,35.8,47.3,51.9,57.3,56.0,56.1,49.5], backgroundColor: '#c62828' },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      datalabels: {
+        display: (ctx) => ctx.dataset.data[ctx.dataIndex] >= 15,
+        color: '#fff',
+        font: { weight: 'bold', size: 12 },
+        formatter: (v) => v.toFixed(0) + '%',
+        anchor: 'center',
+        align: 'center'
+      },
+      tooltip: {
+        callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y}%` }
+      },
+      legend: { position: 'top', labels: { usePointStyle: true, padding: 16 } }
+    },
+    scales: {
+      x: { stacked: true },
+      y: { stacked: true, beginAtZero: true, max: 100,
+        title: { display: true, text: '% of Funded Loans' },
+        ticks: { callback: v => v + '%' }
+      }
+    }
+  }
+});
+
 // CHANNEL CHART
 new Chart(document.getElementById('channelChart'), {
   type: 'bar',
@@ -551,35 +639,6 @@ new Chart(document.getElementById('trendChart'), {
       y1: { beginAtZero: true, position: 'right', title: { display: true, text: 'Total Applications' }, grid: { drawOnChartArea: false } }
     }
   }
-});
-
-// FROZEN CREDIT DAILY
-new Chart(document.getElementById('frozenChart'), {
-  type: 'bar',
-  data: {
-    labels: ['Feb19','Feb20','Feb21','Feb22','Feb23','Feb24','Feb25','Feb26','Feb27','Feb28','Mar1','Mar2','Mar3','Mar4','Mar5','Mar6','Mar7','Mar8','Mar9','Mar10','Mar11'],
-    datasets: [{
-      label: 'Frozen Credit %',
-      data: [2.95,2.34,2.75,2.29,2.36,2.07,2.17,2.67,2.10,3.42,4.23,3.92,3.87,0.35,0.19,0.23,0.35,0.21,0.34,0.11,0.25],
-      backgroundColor: [2.95,2.34,2.75,2.29,2.36,2.07,2.17,2.67,2.10,3.42,4.23,3.92,3.87,0.35,0.19,0.23,0.35,0.21,0.34,0.11,0.25].map(v => v > 2 ? colors.red : colors.blue)
-    }]
-  },
-  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: true, max: 5, title: { display: true, text: 'Frozen Credit %' } } } }
-});
-
-// FROZEN BY VANTAGE
-new Chart(document.getElementById('frozenVantageChart'), {
-  type: 'bar',
-  data: {
-    labels: ['<550','550-619','620-679','680-739','740-799','800+','No Score'],
-    datasets: [
-      { label: 'February', data: [0.25,0.40,0.79,0.99,1.28,1.10,32.77], backgroundColor: colors.orange },
-      { label: 'March', data: [0.12,0.24,0.25,0.25,0.24,0.34,30.99], backgroundColor: colors.blue },
-    ]
-  },
-  options: { responsive: true, maintainAspectRatio: false,
-    scales: { y: { beginAtZero: true, title: { display: true, text: 'Frozen Credit %' } } } }
 });
 
 // Smooth scroll for nav
