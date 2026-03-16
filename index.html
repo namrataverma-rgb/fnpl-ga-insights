@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FNPL GA1.0 Credit Policy Insights</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #1a237e;
+    --accent: #0d47a1;
+    --green: #2e7d32;
+    --red: #c62828;
+    --orange: #e65100;
+    --bg: #f5f6fa;
+    --card: #ffffff;
+    --text: #212121;
+    --muted: #757575;
+    --border: #e0e0e0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+
+  .header {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white; padding: 32px 48px; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+  .header h1 { font-size: 28px; font-weight: 700; }
+  .header p { opacity: 0.85; margin-top: 4px; font-size: 14px; }
+
+  nav {
+    background: white; border-bottom: 1px solid var(--border); padding: 0 48px;
+    display: flex; gap: 0; overflow-x: auto; position: sticky; top: 88px; z-index: 99;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  nav a {
+    padding: 14px 20px; text-decoration: none; color: var(--muted); font-size: 13px;
+    font-weight: 600; white-space: nowrap; border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  nav a:hover, nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 48px 80px; }
+
+  section { margin-bottom: 40px; scroll-margin-top: 140px; }
+  section h2 {
+    font-size: 22px; font-weight: 700; color: var(--primary); margin-bottom: 16px;
+    padding-bottom: 8px; border-bottom: 2px solid var(--accent);
+  }
+
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px; margin-bottom: 24px;
+  }
+  .kpi {
+    background: var(--card); border-radius: 12px; padding: 20px 24px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06); border-left: 4px solid var(--accent);
+  }
+  .kpi .label { font-size: 12px; text-transform: uppercase; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; }
+  .kpi .value { font-size: 28px; font-weight: 700; color: var(--primary); margin-top: 4px; }
+  .kpi .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .kpi.green { border-left-color: var(--green); }
+  .kpi.green .value { color: var(--green); }
+  .kpi.red { border-left-color: var(--red); }
+  .kpi.red .value { color: var(--red); }
+  .kpi.orange { border-left-color: var(--orange); }
+  .kpi.orange .value { color: var(--orange); }
+
+  .card {
+    background: var(--card); border-radius: 12px; padding: 24px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06); margin-bottom: 20px;
+  }
+  .card h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #f0f2f5; padding: 10px 12px; text-align: left; font-weight: 700; color: var(--primary); border-bottom: 2px solid var(--border); }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: #f8f9ff; }
+  .right { text-align: right; }
+  .bold { font-weight: 700; }
+
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;
+  }
+  .badge-green { background: #e8f5e9; color: var(--green); }
+  .badge-red { background: #fce4ec; color: var(--red); }
+  .badge-orange { background: #fff3e0; color: var(--orange); }
+  .badge-blue { background: #e3f2fd; color: var(--accent); }
+
+  .swap-grid {
+    display: grid; grid-template-columns: 120px 1fr 1fr; grid-template-rows: auto 1fr 1fr;
+    gap: 2px; background: var(--border); border-radius: 8px; overflow: hidden;
+  }
+  .swap-cell { padding: 20px; text-align: center; background: white; }
+  .swap-header { background: #f0f2f5; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .swap-agree { background: #e8f5e9; }
+  .swap-ga-only { background: #e3f2fd; }
+  .swap-beta-only { background: #fff3e0; }
+  .swap-cell .big { font-size: 24px; font-weight: 700; }
+  .swap-cell .pct { font-size: 14px; color: var(--muted); }
+  .swap-cell .pd { font-size: 12px; margin-top: 4px; }
+
+  .insight-box {
+    background: #fffde7; border-left: 4px solid #f9a825; padding: 16px 20px;
+    border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 14px; line-height: 1.6;
+  }
+  .insight-box strong { color: var(--primary); }
+
+  .rec-card {
+    border-radius: 12px; padding: 20px; margin-bottom: 12px;
+    border: 1px solid var(--border);
+  }
+  .rec-card.tier1 { background: #e8f5e9; border-left: 5px solid var(--green); }
+  .rec-card.tier2 { background: #fff3e0; border-left: 5px solid var(--orange); }
+  .rec-card.skip { background: #fce4ec; border-left: 5px solid var(--red); }
+  .rec-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .rec-card p { font-size: 13px; color: #555; line-height: 1.5; }
+
+  .chart-container { position: relative; height: 320px; }
+  .chart-container.tall { height: 400px; }
+
+  .heatmap-table td { text-align: center; font-weight: 700; font-size: 14px; min-width: 70px; }
+  .heatmap-table th { text-align: center; }
+
+  .footer { text-align: center; padding: 32px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>FNPL GA1.0 Credit Policy Insights</h1>
+  <p>WebBank / Intuit Financial &mdash; File Now, Pay Later &bull; Data: 70,686 GA1.0 applications (Feb 19 &ndash; Mar 12, 2026)</p>
+</div>
+
+<nav>
+  <a href="#summary" class="active">Summary</a>
+  <a href="#funnel">Funnel</a>
+  <a href="#declines">Decline Waterfall</a>
+  <a href="#swap">Beta vs GA</a>
+  <a href="#risk">Risk Segments</a>
+  <a href="#takerate">Take Rate</a>
+  <a href="#channels">Channels</a>
+  <a href="#trends">Trends</a>
+  <a href="#frozen">Frozen Credit</a>
+  <a href="#recommendations">Recommendations</a>
+</nav>
+
+<div class="container">
+
+<!-- ============ EXECUTIVE SUMMARY ============ -->
+<section id="summary">
+  <h2>Executive Summary</h2>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="label">Total Applications</div><div class="value">70,686</div><div class="sub">GA1.0 group only</div></div>
+    <div class="kpi green"><div class="label">GA Approval Rate</div><div class="value">58.9%</div><div class="sub">41,609 approved</div></div>
+    <div class="kpi"><div class="label">Total Funded</div><div class="value">9,435</div><div class="sub">13.3% overall yield</div></div>
+    <div class="kpi orange"><div class="label">Avg Funded Amount</div><div class="value">$1,544</div><div class="sub">$200 &ndash; $6,000 range</div></div>
+    <div class="kpi"><div class="label">Avg APR (Funded)</div><div class="value">20.3%</div><div class="sub">15% &ndash; 33% by RS</div></div>
+    <div class="kpi green"><div class="label">Avg PD (Approved)</div><div class="value">3.8%</div><div class="sub">UW V1 Model score</div></div>
+    <div class="kpi"><div class="label">Avg Vantage (Approved)</div><div class="value">735</div><div class="sub">Vantage 3.0</div></div>
+    <div class="kpi red"><div class="label">Most Binding Rule</div><div class="value">60+ DPD</div><div class="sub">25% of all declines</div></div>
+  </div>
+  <div class="insight-box">
+    <strong>Bottom Line:</strong> GA1.0 is significantly more expansionary than Beta &mdash; it approves 11,473 additional apps (PD 4.8%) that Beta declines, while only declining 1,275 that Beta approves (PD 28.6%). The policy is making better risk-adjusted decisions. The biggest opportunity is improving take rate, especially in RS1 where 90%+ are approved but only ~14% accept the offer.
+  </div>
+</section>
+
+<!-- ============ FUNNEL ============ -->
+<section id="funnel">
+  <h2>Funnel Conversion by Risk Segment</h2>
+  <div class="card">
+    <div class="chart-container tall"><canvas id="funnelChart"></canvas></div>
+  </div>
+  <div class="card">
+    <table>
+      <tr><th>RS</th><th class="right">Apps</th><th class="right">Contingent Appr %</th><th class="right">Cont&rarr;Final %</th><th class="right">Accept Rate %</th><th class="right">Fund Rate %</th><th class="right">Overall Yield %</th></tr>
+      <tr><td class="bold">RS1</td><td class="right">25,852</td><td class="right">90.2%</td><td class="right">16.1%</td><td class="right">84.5%</td><td class="right">83.0%</td><td class="right">10.2%</td></tr>
+      <tr><td class="bold">RS2</td><td class="right">10,751</td><td class="right">86.4%</td><td class="right">36.9%</td><td class="right">91.2%</td><td class="right">82.4%</td><td class="right">24.0%</td></tr>
+      <tr><td class="bold">RS3</td><td class="right">8,311</td><td class="right">67.4%</td><td class="right">46.8%</td><td class="right">93.0%</td><td class="right">80.7%</td><td class="right">23.7%</td></tr>
+      <tr><td class="bold">RS4</td><td class="right">6,201</td><td class="right">52.4%</td><td class="right">49.7%</td><td class="right">93.6%</td><td class="right">78.4%</td><td class="right">19.1%</td></tr>
+      <tr><td class="bold">RS5</td><td class="right">4,264</td><td class="right">44.1%</td><td class="right">50.2%</td><td class="right">94.1%</td><td class="right">78.2%</td><td class="right">16.3%</td></tr>
+      <tr><td class="bold">RS6</td><td class="right">3,647</td><td class="right">30.1%</td><td class="right">49.5%</td><td class="right">94.8%</td><td class="right">74.8%</td><td class="right">10.6%</td></tr>
+      <tr style="background:#fce4ec;"><td class="bold">RS7</td><td class="right">11,660</td><td class="right">0.0%</td><td class="right">&mdash;</td><td class="right">&mdash;</td><td class="right">&mdash;</td><td class="right">0.0%</td></tr>
+    </table>
+  </div>
+  <div class="insight-box">
+    <strong>Key Finding:</strong> RS1 has the highest approval rate (90.2%) but the <strong>lowest contingent-to-final conversion</strong> (16.1%). Most RS1 applicants never complete the process. RS3&ndash;6 convert at 47&ndash;50% from contingent to final &mdash; those who get approved are far more likely to finish.
+  </div>
+</section>
+
+<!-- ============ DECLINE WATERFALL ============ -->
+<section id="declines">
+  <h2>Decline Waterfall</h2>
+  <div class="card">
+    <div class="chart-container tall"><canvas id="declineChart"></canvas></div>
+  </div>
+  <div class="card">
+    <table>
+      <tr><th>Decline Reason (AAN)</th><th>Policy Rule</th><th class="right">Declines</th><th class="right">% of Declines</th><th class="right">Avg PD</th><th class="right">Avg Vantage</th><th>Risk Level</th></tr>
+      <tr><td>60+ DPD in 6 Months</td><td>CCE7</td><td class="right">7,268</td><td class="right">25.0%</td><td class="right">29.8%</td><td class="right">566</td><td><span class="badge badge-red">High</span></td></tr>
+      <tr><td>Charge-offs &le;12 Months</td><td>CCE6</td><td class="right">5,199</td><td class="right">17.9%</td><td class="right">34.0%</td><td class="right">550</td><td><span class="badge badge-red">High</span></td></tr>
+      <tr><td>Incomplete Application</td><td>&mdash;</td><td class="right">3,708</td><td class="right">12.8%</td><td class="right">6.5%</td><td class="right">704</td><td><span class="badge badge-green">Low</span></td></tr>
+      <tr><td>DTI Too High</td><td>AFE2</td><td class="right">3,026</td><td class="right">10.4%</td><td class="right">9.3%</td><td class="right">679</td><td><span class="badge badge-green">Low</span></td></tr>
+      <tr><td>Model PD Cutoff</td><td>UWE1</td><td class="right">2,040</td><td class="right">7.0%</td><td class="right">39.6%</td><td class="right">604</td><td><span class="badge badge-red">High</span></td></tr>
+      <tr><td>KYC Failure</td><td>LCE1-3</td><td class="right">2,016</td><td class="right">6.9%</td><td class="right">5.5%</td><td class="right">715</td><td><span class="badge badge-green">Low</span></td></tr>
+      <tr><td>No Experian Bureau Hit</td><td>CCE3</td><td class="right">1,388</td><td class="right">4.8%</td><td class="right">9.9%</td><td class="right">&mdash;</td><td><span class="badge badge-orange">Medium</span></td></tr>
+      <tr><td>Vantage &lt; 550</td><td>CCE9</td><td class="right">1,338</td><td class="right">4.6%</td><td class="right">32.5%</td><td class="right">522</td><td><span class="badge badge-red">High</span></td></tr>
+      <tr><td>High Utilization &gt;100%</td><td>CCE8</td><td class="right">907</td><td class="right">3.1%</td><td class="right">18.2%</td><td class="right">614</td><td><span class="badge badge-orange">Medium</span></td></tr>
+      <tr><td>Bankruptcy 24 Months</td><td>CCE5</td><td class="right">535</td><td class="right">1.8%</td><td class="right">23.4%</td><td class="right">624</td><td><span class="badge badge-red">High</span></td></tr>
+    </table>
+  </div>
+  <div class="insight-box">
+    <strong>Key Finding:</strong> Incomplete applications (3,708) and KYC failures (2,016) account for ~20% of declines but have <strong>low PD (5.5&ndash;6.5%)</strong>. These are creditworthy applicants lost to operational/UX issues, not credit risk.
+  </div>
+</section>
+
+<!-- ============ BETA vs GA SWAP ============ -->
+<section id="swap">
+  <h2>Beta vs GA1.0 Decision Comparison</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Decision Swap Matrix</h3>
+      <div class="swap-grid">
+        <div class="swap-cell swap-header"></div>
+        <div class="swap-cell swap-header">GA Approved</div>
+        <div class="swap-cell swap-header">GA Declined</div>
+        <div class="swap-cell swap-header">Beta<br>Approved</div>
+        <div class="swap-cell swap-agree"><div class="big">30,136</div><div class="pct">42.6%</div><div class="pd">PD: 3.4%</div></div>
+        <div class="swap-cell swap-beta-only"><div class="big">1,275</div><div class="pct">1.8%</div><div class="pd" style="color:var(--red)">PD: 28.6%</div></div>
+        <div class="swap-cell swap-header">Beta<br>Declined</div>
+        <div class="swap-cell swap-ga-only"><div class="big">11,473</div><div class="pct">16.2%</div><div class="pd" style="color:var(--green)">PD: 4.8%</div></div>
+        <div class="swap-cell swap-agree"><div class="big">27,802</div><div class="pct">39.3%</div><div class="pd">PD: 22.8%</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Interpretation</h3>
+      <div style="padding:10px 0;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <span class="badge badge-blue" style="font-size:14px;padding:8px 16px;">+11,473</span>
+          <div><strong>GA approves, Beta declines</strong><br><span style="color:var(--muted);font-size:13px;">PD 4.8% &mdash; excellent risk, huge incremental volume</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <span class="badge badge-red" style="font-size:14px;padding:8px 16px;">&minus;1,275</span>
+          <div><strong>Beta approves, GA declines</strong><br><span style="color:var(--muted);font-size:13px;">PD 28.6% &mdash; high risk, correctly declined by GA</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <span class="badge badge-green" style="font-size:14px;padding:8px 16px;">82%</span>
+          <div><strong>Agreement rate</strong><br><span style="color:var(--muted);font-size:13px;">Both policies agree on 57,938 of 70,686 apps</span></div>
+        </div>
+      </div>
+      <div class="insight-box" style="margin-top:12px;">
+        <strong>Verdict:</strong> GA1.0 is a strict upgrade over Beta. It captures 11K+ good-risk approvals that Beta misses, while correctly blocking 1.3K high-risk apps that Beta would approve.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RISK SEGMENTS ============ -->
+<section id="risk">
+  <h2>Risk Segment Performance &amp; Pricing</h2>
+  <div class="card">
+    <div class="chart-container tall"><canvas id="riskChart"></canvas></div>
+  </div>
+  <div class="card">
+    <table>
+      <tr><th>RS</th><th class="right">Apps</th><th class="right">Appr Rate</th><th class="right">Avg PD</th><th class="right">Avg Vantage</th><th class="right">APR 3m</th><th class="right">APR 6m</th><th class="right">APR 9m</th><th class="right">Avg DTI (Appr)</th><th class="right">Avg Income</th><th class="right">Avg Bal Due</th></tr>
+      <tr><td class="bold">1</td><td class="right">25,852</td><td class="right">86.6%</td><td class="right">0.4%</td><td class="right">781</td><td class="right">15%</td><td class="right">15%</td><td class="right">15%</td><td class="right">32.4%</td><td class="right">$137,688</td><td class="right">$1,865</td></tr>
+      <tr><td class="bold">2</td><td class="right">10,751</td><td class="right">80.5%</td><td class="right">2.6%</td><td class="right">713</td><td class="right">18%</td><td class="right">18%</td><td class="right">18%</td><td class="right">44.1%</td><td class="right">$80,939</td><td class="right">$1,586</td></tr>
+      <tr><td class="bold">3</td><td class="right">8,311</td><td class="right">61.3%</td><td class="right">6.9%</td><td class="right">669</td><td class="right">21%</td><td class="right">22%</td><td class="right">23%</td><td class="right">44.3%</td><td class="right">$70,974</td><td class="right">$1,487</td></tr>
+      <tr><td class="bold">4</td><td class="right">6,201</td><td class="right">46.5%</td><td class="right">12.0%</td><td class="right">622</td><td class="right">24%</td><td class="right">25%</td><td class="right">26%</td><td class="right">45.3%</td><td class="right">$66,369</td><td class="right">$1,462</td></tr>
+      <tr><td class="bold">5</td><td class="right">4,264</td><td class="right">38.4%</td><td class="right">17.1%</td><td class="right">588</td><td class="right">28%</td><td class="right">30%</td><td class="right">32%</td><td class="right">45.7%</td><td class="right">$66,348</td><td class="right">$1,485</td></tr>
+      <tr><td class="bold">6</td><td class="right">3,647</td><td class="right">25.9%</td><td class="right">22.7%</td><td class="right">577</td><td class="right">33%</td><td class="right">33%</td><td class="right">33%</td><td class="right">43.2%</td><td class="right">$64,568</td><td class="right">$1,476</td></tr>
+      <tr style="background:#fce4ec;"><td class="bold">7</td><td class="right">11,660</td><td class="right">0.0%</td><td class="right">40.6%</td><td class="right">549</td><td class="right" colspan="6">Auto-declined (UWE1/UWE2)</td></tr>
+    </table>
+  </div>
+  <div class="insight-box">
+    <strong>Pricing Adequacy:</strong> RS1&ndash;2 have massive margin cushion (APR 15&ndash;18% vs PD 0.4&ndash;2.6%). RS3&ndash;4 are healthy. RS5&ndash;6 are tighter but APR still exceeds PD. RS7 is correctly excluded at 40.6% PD.
+  </div>
+</section>
+
+<!-- ============ TAKE RATE ============ -->
+<section id="takerate">
+  <h2>Take Rate Analysis</h2>
+  <div class="card" style="background:#f0f4ff;margin-bottom:20px;padding:16px 24px;">
+    <strong>Definitions:</strong>&nbsp;
+    <span class="badge badge-red">Take Rate</span> = Offer Accepted / Contingent Approved &nbsp;&bull;&nbsp;
+    <span class="badge badge-green">Fund Rate</span> = Funded / Contingent Approved &nbsp;&bull;&nbsp;
+    <span class="badge badge-blue">Overall Yield</span> = Funded / Total Apps
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Take Rate by Balance Due</h3>
+      <div class="chart-container"><canvas id="takeBalChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Take Rate by Risk Segment</h3>
+      <div class="chart-container"><canvas id="takeRsChart"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Take Rate Heatmap &mdash; Risk Segment x Balance Due</h3>
+    <table class="heatmap-table">
+      <tr><th>RS</th><th>&lt;$500</th><th>$500-999</th><th>$1K-1.5K</th><th>$1.5K-2K</th><th>$2K-3K</th><th>$3K-4K</th><th>$4K-5K</th><th>$5K-6K</th></tr>
+      <tr><td class="bold">1</td><td style="background:#fff3e0">10%</td><td style="background:#ffe0b2">15%</td><td style="background:#ffe0b2">15%</td><td style="background:#ffe0b2">14%</td><td style="background:#ffe0b2">14%</td><td style="background:#ffe0b2">15%</td><td style="background:#ffe0b2">14%</td><td style="background:#ffe0b2">13%</td></tr>
+      <tr><td class="bold">2</td><td style="background:#ffcc80">30%</td><td style="background:#ffb74d">36%</td><td style="background:#ffb74d">36%</td><td style="background:#ffb74d">36%</td><td style="background:#ffb74d">35%</td><td style="background:#ffb74d">33%</td><td style="background:#ffa726">31%</td><td style="background:#ffa726">31%</td></tr>
+      <tr><td class="bold">3</td><td style="background:#ff9800">41%</td><td style="background:#fb8c00">48%</td><td style="background:#fb8c00">49%</td><td style="background:#ff9800">43%</td><td style="background:#ff9800">42%</td><td style="background:#ffb74d">35%</td><td style="background:#ffb74d">33%</td><td style="background:#eee;color:#999">N/A</td></tr>
+      <tr><td class="bold">4</td><td style="background:#f57c00;color:white">47%</td><td style="background:#ef6c00;color:white">53%</td><td style="background:#ef6c00;color:white">51%</td><td style="background:#ff9800">43%</td><td style="background:#ff9800">45%</td><td style="background:#ffcc80">29%</td><td style="background:#ffcc80">27%</td><td style="background:#eee;color:#999">N/A</td></tr>
+      <tr><td class="bold">5</td><td style="background:#ef6c00;color:white">51%</td><td style="background:#e65100;color:white">54%</td><td style="background:#ef6c00;color:white">51%</td><td style="background:#ff9800">43%</td><td style="background:#ffb74d">36%</td><td style="background:#ffb74d">38%</td><td style="background:#ffcc80">28%</td><td style="background:#eee;color:#999">N/A</td></tr>
+      <tr><td class="bold">6</td><td style="background:#e65100;color:white">55%</td><td style="background:#ef6c00;color:white">53%</td><td style="background:#ff9800">45%</td><td style="background:#ff9800">40%</td><td style="background:#ffb74d">40%</td><td style="background:#ffe0b2">16%</td><td style="background:#eee;color:#999">N/A</td><td style="background:#eee;color:#999">N/A</td></tr>
+    </table>
+  </div>
+  <div class="insight-box">
+    <strong>Key Findings:</strong> (1) RS1 has a <strong>take rate problem, not a credit problem</strong> &mdash; 90% approved, only 10&ndash;15% accept. (2) Sweet spot is <strong>$500&ndash;$1,500</strong> balance due. (3) Higher risk segments have 3&ndash;4x higher take rates due to greater urgency. (4) Max loan caps create dead zones at $5K+ for RS3&ndash;5 and $4K+ for RS6.
+  </div>
+</section>
+
+<!-- ============ CHANNELS ============ -->
+<section id="channels">
+  <h2>Customer Type &amp; Channel Mix</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Approval Rate by Customer Type x Channel</h3>
+      <div class="chart-container"><canvas id="channelChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Funded Loan Term Selection</h3>
+      <div class="chart-container"><canvas id="termChart"></canvas></div>
+    </div>
+  </div>
+  <div class="insight-box">
+    <strong>Key Findings:</strong> (1) <strong>Prominent CK Web</strong> is the best channel (75.5% approval, PD 5.3%). (2) <strong>Non-prominent CK Mobile</strong> is the worst (12.9% approval, PD 32%). (3) Mobile channels have 20&ndash;25pp lower approval rates than Web. (4) 9-month term is most popular (42.9%), preferred for higher balances.
+  </div>
+</section>
+
+<!-- ============ TRENDS ============ -->
+<section id="trends">
+  <h2>Weekly Trends</h2>
+  <div class="card">
+    <div class="chart-container tall"><canvas id="trendChart"></canvas></div>
+  </div>
+  <div class="card">
+    <table>
+      <tr><th>Week</th><th class="right">Apps</th><th class="right">Approval Rate</th><th class="right">Fund Rate</th><th class="right">Avg PD</th><th class="right">Avg Vantage</th><th class="right">Avg Bal Due</th></tr>
+      <tr><td>Feb 16</td><td class="right">4,675</td><td class="right">22.6%</td><td class="right">17.8%</td><td class="right">17.4%</td><td class="right">637</td><td class="right">$1,686</td></tr>
+      <tr><td>Feb 23</td><td class="right">17,683</td><td class="right">45.5%</td><td class="right">16.4%</td><td class="right">15.1%</td><td class="right">657</td><td class="right">$1,614</td></tr>
+      <tr><td>Mar 2</td><td class="right">34,262</td><td class="right">67.3%</td><td class="right">12.6%</td><td class="right">9.6%</td><td class="right">696</td><td class="right">$1,637</td></tr>
+      <tr><td>Mar 9</td><td class="right">14,066</td><td class="right">67.3%</td><td class="right">9.7%</td><td class="right">9.8%</td><td class="right">694</td><td class="right">$1,656</td></tr>
+    </table>
+  </div>
+  <div class="insight-box">
+    <strong>Key Finding:</strong> Approval rate tripled (22.6% &rarr; 67.3%) as applicant quality improved with tax season ramp. However, <strong>fund rate is declining</strong> (17.8% &rarr; 9.7%) &mdash; more approvals are sitting unconverted, suggesting a growing engagement gap.
+  </div>
+</section>
+
+<!-- ============ FROZEN CREDIT ============ -->
+<section id="frozen">
+  <h2>Frozen Credit Analysis</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Frozen Credit Rate by App Date</h3>
+      <div class="chart-container"><canvas id="frozenChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Frozen Credit by Vantage Group (Feb vs Mar)</h3>
+      <div class="chart-container"><canvas id="frozenVantageChart"></canvas></div>
+    </div>
+  </div>
+  <div class="insight-box">
+    <strong>Key Finding:</strong> Frozen credit is <strong>not increasing</strong> &mdash; it spiked to 4.2% on Mar 1 then dropped to 0.2% after a structural break on Mar 4. The phenomenon is almost entirely concentrated in the "No Score" group (~31%). For scored applicants, frozen credit is under 1% across all Vantage bands.
+  </div>
+</section>
+
+<!-- ============ RECOMMENDATIONS ============ -->
+<section id="recommendations">
+  <h2>Policy Relaxation Recommendations</h2>
+  <p style="color:var(--muted);margin-bottom:20px;font-size:14px;">All recommendations are within pre-approved ranges per Section 7 of the Credit Policy. Combined Tier 1 impact: +739 incremental approvals, moving approval rate from 58.9% to ~59.9%.</p>
+
+  <div class="rec-card tier1">
+    <h4>S1: Raise DTI Cap for RS3&ndash;5 from 70% to 75% <span class="badge badge-green">TIER 1 &mdash; RECOMMENDED</span></h4>
+    <p><strong>+348 incremental approvals</strong> &bull; Avg PD: 10.95% &bull; Already priced at 21&ndash;32% APR<br>
+    RS3: +171 apps (PD 6.9%, Vantage 663) &bull; RS4: +117 (PD 13.0%, Vantage 642) &bull; RS5: +60 (PD 18.6%, Vantage 631)<br>
+    <em>Pre-approved range: 60%&ndash;80% max DTI. Moderate risk applicants just 1&ndash;5pp above threshold.</em></p>
+  </div>
+
+  <div class="rec-card tier1">
+    <h4>S4: Raise Utilization Cap from &gt;100% to &gt;110% (CCE8) <span class="badge badge-green">TIER 1 &mdash; RECOMMENDED</span></h4>
+    <p><strong>+391 incremental approvals</strong> &bull; Avg PD: 10.26%<br>
+    Sole-reason declines where slight over-utilization is the only failing rule.<br>
+    <em>Pre-approved range: 90%&ndash;110%. Within policy notification procedure.</em></p>
+  </div>
+
+  <div class="rec-card tier2">
+    <h4>S3: Relax Charge-off Recency from &le;12mo to &le;6mo (CCE6) <span class="badge badge-orange">TIER 2 &mdash; MODERATE</span></h4>
+    <p><strong>+374 incremental approvals</strong> &bull; Avg PD: 13.54% &bull; Avg Vantage: 567<br>
+    Charge-offs 7&ndash;12 months ago are less predictive of near-term default than recent ones.<br>
+    <em>Pre-approved range: 0&ndash;24 months. Recommend pairing with tighter monitoring.</em></p>
+  </div>
+
+  <div class="rec-card tier2">
+    <h4>S2: Raise DTI Cap for RS6 from 60% to 70% <span class="badge badge-orange">TIER 2 &mdash; MODERATE</span></h4>
+    <p><strong>+168 incremental approvals</strong> &bull; Avg PD: 25.18%<br>
+    High-risk RS6 applicants priced at 33% APR. Pricing covers risk but loss rates could be meaningful.<br>
+    <em>Higher risk appetite required.</em></p>
+  </div>
+
+  <div class="rec-card skip">
+    <h4>Not Recommended <span class="badge badge-red">SKIP</span></h4>
+    <p><strong>Vantage floor 550&rarr;520 (CCE9):</strong> Avg PD 34.5% &mdash; too risky even with pricing.<br>
+    <strong>Model score 0.30&rarr;0.35 (UWE1):</strong> 0 sole-reason declines &mdash; always co-occurs with other rules.<br>
+    <strong>60+ DPD rule (CCE7):</strong> N/A pre-approved range &mdash; requires full Bank approval.</p>
+  </div>
+</section>
+
+</div>
+
+<div class="footer">FNPL GA1.0 Credit Policy Insights &bull; Generated Mar 15, 2026 &bull; Data: sandbox_risk_7216.fnpl_alpha_ga1_sim</div>
+
+<script>
+const colors = {
+  blue: '#1565c0', green: '#2e7d32', red: '#c62828', orange: '#e65100',
+  purple: '#6a1b9a', teal: '#00838f', gray: '#9e9e9e',
+  blueLight: 'rgba(21,101,192,0.15)', greenLight: 'rgba(46,125,50,0.15)',
+  redLight: 'rgba(198,40,40,0.15)'
+};
+
+// FUNNEL CHART
+new Chart(document.getElementById('funnelChart'), {
+  type: 'bar',
+  data: {
+    labels: ['RS1', 'RS2', 'RS3', 'RS4', 'RS5', 'RS6', 'RS7'],
+    datasets: [
+      { label: 'Contingent Approval %', data: [90.2,86.4,67.4,52.4,44.1,30.1,0], backgroundColor: colors.blue },
+      { label: 'Cont→Final %', data: [16.1,36.9,46.8,49.7,50.2,49.5,0], backgroundColor: colors.green },
+      { label: 'Overall Fund Rate %', data: [10.2,24.0,23.7,19.1,16.3,10.6,0], backgroundColor: colors.red },
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: false } },
+    scales: { y: { beginAtZero: true, max: 100, title: { display: true, text: '% of Total Apps' } } } }
+});
+
+// DECLINE WATERFALL
+new Chart(document.getElementById('declineChart'), {
+  type: 'bar',
+  data: {
+    labels: ['60+ DPD 6mo','Charge-offs','Incomplete App','DTI High','Model PD','KYC','No Bureau','Vantage<550','High Util','Bankruptcy'],
+    datasets: [{
+      label: 'Declined Applications',
+      data: [7268,5199,3708,3026,2040,2016,1388,1338,907,535],
+      backgroundColor: ['#c62828','#c62828','#2e7d32','#2e7d32','#c62828','#2e7d32','#e65100','#c62828','#e65100','#c62828']
+    }]
+  },
+  options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, title: { display: false } },
+    scales: { x: { title: { display: true, text: 'Declined Applications' } } } }
+});
+
+// RISK SEGMENT CHART
+new Chart(document.getElementById('riskChart'), {
+  type: 'bar',
+  data: {
+    labels: ['RS1','RS2','RS3','RS4','RS5','RS6','RS7'],
+    datasets: [
+      { label: 'Approval Rate %', data: [86.6,80.5,61.3,46.5,38.4,25.9,0], backgroundColor: colors.blue, yAxisID: 'y' },
+      { label: 'Avg PD %', data: [0.43,2.58,6.9,11.98,17.13,22.66,40.57], type: 'line', borderColor: colors.red, pointBackgroundColor: colors.red, borderWidth: 3, yAxisID: 'y1', fill: false },
+      { label: 'APR 9m %', data: [15,18,23,26,32,33,0], type: 'line', borderColor: colors.green, pointBackgroundColor: colors.green, borderWidth: 2, borderDash: [5,5], yAxisID: 'y1', fill: false }
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    scales: {
+      y: { beginAtZero: true, max: 100, position: 'left', title: { display: true, text: 'Approval Rate %' } },
+      y1: { beginAtZero: true, max: 50, position: 'right', title: { display: true, text: 'PD % / APR %' }, grid: { drawOnChartArea: false } }
+    }
+  }
+});
+
+// TAKE RATE BY BALANCE DUE
+new Chart(document.getElementById('takeBalChart'), {
+  type: 'line',
+  data: {
+    labels: ['<$500','$500-999','$1K-1.5K','$1.5K-2K','$2K-3K','$3K-4K','$4K-5K','$5K-6K'],
+    datasets: [
+      { label: 'Take Rate %', data: [25.4,30.7,29.1,26.6,24.6,21.6,19.4,17.1], borderColor: colors.red, backgroundColor: colors.redLight, pointRadius: 5, fill: true, tension: 0.3 },
+      { label: 'Fund Rate %', data: [19.8,25.0,24.0,21.0,20.2,18.2,16.3,14.0], borderColor: colors.green, backgroundColor: colors.greenLight, pointRadius: 5, fill: true, tension: 0.3 },
+      { label: 'Overall Yield %', data: [11.9,15.4,15.1,13.3,13.3,12.2,10.8,8.4], borderColor: colors.blue, backgroundColor: colors.blueLight, pointRadius: 5, fill: true, tension: 0.3 },
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 40 } } }
+});
+
+// TAKE RATE BY RS
+new Chart(document.getElementById('takeRsChart'), {
+  type: 'bar',
+  data: {
+    labels: ['RS1','RS2','RS3','RS4','RS5','RS6'],
+    datasets: [
+      { label: 'Take Rate %', data: [13.6,33.6,43.5,46.5,47.2,47.0], backgroundColor: colors.red },
+      { label: 'Fund Rate %', data: [11.3,27.7,35.1,36.5,36.9,35.1], backgroundColor: colors.green },
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 60 } } }
+});
+
+// CHANNEL CHART
+new Chart(document.getElementById('channelChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Non-CK\nWeb','Prom CK\nWeb','Non-CK\nMobile','Prom CK\nMobile','Non-CK\nMob Web','Prom CK\nMob Web','Non-Prom CK\nWeb','Non-Prom CK\nMobile'],
+    datasets: [{
+      label: 'GA Approval Rate %',
+      data: [66.4,75.5,39.7,56.9,41.5,51.8,20.4,12.9],
+      backgroundColor: [colors.blue,colors.green,colors.blue,colors.green,colors.blue,colors.green,colors.red,colors.red]
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, max: 85, title: { display: true, text: 'Approval Rate %' } } } }
+});
+
+// TERM SELECTION
+new Chart(document.getElementById('termChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['3-Month (33.7%)','6-Month (23.5%)','9-Month (42.9%)'],
+    datasets: [{ data: [3177,2214,4044], backgroundColor: [colors.blue, colors.orange, colors.red] }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: {
+    legend: { position: 'bottom' },
+    title: { display: true, text: '9,435 Funded Loans' }
+  }}
+});
+
+// WEEKLY TRENDS
+new Chart(document.getElementById('trendChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Feb 16','Feb 23','Mar 2','Mar 9'],
+    datasets: [
+      { label: 'Total Apps', data: [4675,17683,34262,14066], backgroundColor: 'rgba(158,158,158,0.3)', yAxisID: 'y1', order: 2 },
+      { label: 'Approval Rate %', data: [22.6,45.5,67.3,67.3], type: 'line', borderColor: colors.blue, pointBackgroundColor: colors.blue, borderWidth: 3, yAxisID: 'y', fill: false, order: 1 },
+      { label: 'Fund Rate %', data: [17.8,16.4,12.6,9.7], type: 'line', borderColor: colors.green, pointBackgroundColor: colors.green, borderWidth: 3, yAxisID: 'y', fill: false, order: 1 },
+      { label: 'Avg PD %', data: [17.38,15.06,9.63,9.80], type: 'line', borderColor: colors.red, pointBackgroundColor: colors.red, borderWidth: 2, borderDash: [5,5], yAxisID: 'y', fill: false, order: 1 },
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    scales: {
+      y: { beginAtZero: true, max: 80, position: 'left', title: { display: true, text: 'Rate %' } },
+      y1: { beginAtZero: true, position: 'right', title: { display: true, text: 'Total Applications' }, grid: { drawOnChartArea: false } }
+    }
+  }
+});
+
+// FROZEN CREDIT DAILY
+new Chart(document.getElementById('frozenChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Feb19','Feb20','Feb21','Feb22','Feb23','Feb24','Feb25','Feb26','Feb27','Feb28','Mar1','Mar2','Mar3','Mar4','Mar5','Mar6','Mar7','Mar8','Mar9','Mar10','Mar11'],
+    datasets: [{
+      label: 'Frozen Credit %',
+      data: [2.95,2.34,2.75,2.29,2.36,2.07,2.17,2.67,2.10,3.42,4.23,3.92,3.87,0.35,0.19,0.23,0.35,0.21,0.34,0.11,0.25],
+      backgroundColor: [2.95,2.34,2.75,2.29,2.36,2.07,2.17,2.67,2.10,3.42,4.23,3.92,3.87,0.35,0.19,0.23,0.35,0.21,0.34,0.11,0.25].map(v => v > 2 ? colors.red : colors.blue)
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, max: 5, title: { display: true, text: 'Frozen Credit %' } } } }
+});
+
+// FROZEN BY VANTAGE
+new Chart(document.getElementById('frozenVantageChart'), {
+  type: 'bar',
+  data: {
+    labels: ['<550','550-619','620-679','680-739','740-799','800+','No Score'],
+    datasets: [
+      { label: 'February', data: [0.25,0.40,0.79,0.99,1.28,1.10,32.77], backgroundColor: colors.orange },
+      { label: 'March', data: [0.12,0.24,0.25,0.25,0.24,0.34,30.99], backgroundColor: colors.blue },
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    scales: { y: { beginAtZero: true, title: { display: true, text: 'Frozen Credit %' } } } }
+});
+
+// Smooth scroll for nav
+document.querySelectorAll('nav a').forEach(a => {
+  a.addEventListener('click', function(e) {
+    e.preventDefault();
+    document.querySelectorAll('nav a').forEach(x => x.classList.remove('active'));
+    this.classList.add('active');
+    document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+
+</body>
+</html>
